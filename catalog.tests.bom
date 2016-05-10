@@ -1,0 +1,109 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+brooklyn.catalog:
+  id: brooklyn-riak-node-tests
+  version: 0.1
+  itemType: template
+  iconUrl: https://github.com/brooklyncentral/brooklyn-riak-node/raw/master/logo.png
+  name: Riak Node tests
+  description: Test that Riak Node is running correctly
+  license_code: Apache-2.0
+  license_url: http://www.apache.org/licenses/LICENSE-2.0.txt
+  item:
+    services:
+    - type: brooklyn-riak-node
+      id: riaknode
+      name: Riak Node
+    - type: org.apache.brooklyn.test.framework.TestCase
+      name: Riak Node tests
+      targetId: riaknode
+      brooklyn.config:
+        timeout: 15m
+      brooklyn.children:
+
+      # Base tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: Base Tests
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Riak Node is up
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.TestHttpCall
+          name: Check Riak Console is accessible
+          url: $brooklyn:component("riaknode").attributeWhenReady("main.uri")
+          applyAssertionTo: status
+          assert:
+          - isEqualTo: 200
+
+      # Effector: restart Tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: "Effector: restart Tests"
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke restart Effector
+          effector: restart
+          params:
+            restartMachine: false
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Riak Node is up after restart
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Riak process has restarted
+          command: ps -ef | grep '[r]iak console'
+          assertStatus:
+            equals: 0
+
+      # Effector: stop + restart Tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: "Effector: stop + restart Tests"
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke stop Effector
+          effector: stop
+          params:
+            stopMachineMode: NEVER
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Riak Node is not up after stop
+          sensor: service.isUp
+          assert:
+          - equals: false
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Riak process has stopped
+          command: ps -ef | grep '[r]iak console'
+          assertStatus:
+            equals: 1
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke restart Effector
+          effector: restart
+          params:
+            restartMachine: false
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Riak Node is up after restart
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Riak process has restarted
+          command: ps -ef | grep '[r]iak console'
+          assertStatus:
+            equals: 0
