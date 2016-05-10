@@ -22,10 +22,12 @@ brooklyn.catalog:
   name: Riak Node
   description: Riak is a distributed NoSQL key-value data store that offers extremely high availability, fault tolerance, operational simplicity and scalability.
   itemType: template
+  iconUrl: https://github.com/brooklyncentral/brooklyn-riak-node/raw/master/logo.png
   license: Apache-2.0
   publish:
     license_code: Apache-2.0
     reference: reference.json
+    qa: catalog.tests.bom
   item:
     services:
     - type: org.apache.brooklyn.entity.nosql.riak.RiakNode
