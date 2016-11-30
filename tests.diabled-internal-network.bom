@@ -1,0 +1,14 @@
+brooklyn.catalog:
+  version: 0.1
+  license_code: APACHE-2.0
+  iconUrl: https://github.com/brooklyncentral/brooklyn-riak-node/raw/master/logo.png
+  items:
+  - id: riak-node-disabled-internal-network 
+    name: Riak Node tests (Disabled internal network)
+    description: Test that Riak Node is running correctly
+    itemType: template
+    item:
+      brooklyn.config:
+        riak.networking.internal: false
+      services:
+      - type: brooklyn-riak-node-tests

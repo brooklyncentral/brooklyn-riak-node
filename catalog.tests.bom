@@ -41,16 +41,16 @@ brooklyn.catalog:
           name: "1. Riak Node up and running initial"
         - type: assert-up-and-running
           name: "2. Riak Node up and running"
-        - type: test-http-status-200
-          name: "3. Riak Node endpoint returns 200"
-          brooklyn.config:
-            url: $brooklyn:component("riaknode").attributeWhenReady("main.uri")
         - type: assert-restart-process
-          name: "4. Riak Node restart process"
+          name: "3. Riak Node restart process"
           brooklyn.config:
             process.grep.name: "[r]iak console"
         - type: assert-stop-and-restart-process
-          name: "5. Riak Node stop and restart process"
+          name: "4. Riak Node stop and restart process"
           brooklyn.config:
             process.grep.name: "[r]iak console"
+        - type: test-http-status-200
+          name: "5. Riak Node endpoint returns 200"
+          brooklyn.config:
+            url: $brooklyn:component("riaknode").attributeWhenReady("main.uri")
 
