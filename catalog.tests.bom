@@ -36,6 +36,9 @@ brooklyn.catalog:
         name: Riak Node tests
         brooklyn.config:
           targetId: riaknode
+          timeout: 1h
+          timeout.initialStartup: 1h
+          timeout.runtimeAssertion: 15m
         brooklyn.children:
         - type: assert-up-and-running-initial
           name: "1. Riak Node up and running initial"
