@@ -17,93 +17,43 @@
 # under the License.
 #
 brooklyn.catalog:
-  id: brooklyn-riak-node-tests
   version: 0.1
-  itemType: template
   iconUrl: https://github.com/brooklyncentral/brooklyn-riak-node/raw/master/logo.png
-  name: Riak Node tests
-  description: Test that Riak Node is running correctly
   license_code: Apache-2.0
   license_url: http://www.apache.org/licenses/LICENSE-2.0.txt
-  item:
-    services:
-    - type: brooklyn-riak-node
-      id: riaknode
-      name: Riak Node
-    - type: org.apache.brooklyn.test.framework.TestCase
-      name: Riak Node tests
-      targetId: riaknode
-      brooklyn.config:
-        timeout: 15m
-      brooklyn.children:
-
-      # Base tests
-      - type: org.apache.brooklyn.test.framework.TestCase
-        name: Base Tests
+  items:
+  - "https://raw.githubusercontent.com/brooklyncentral/common-catalog-utils/master/common-tests/src/main/resources/commontests/common.tests.bom"
+  - id: brooklyn-riak-node-tests
+    itemType: template
+    name: Riak Node tests
+    description: Test that Riak Node is running correctly
+    item:
+      services:
+      - type: brooklyn-riak-node
+        id: riaknode
+        name: Riak Node
+      - type: test-case
+        name: Riak Node tests
+        brooklyn.config:
+          targetId: riaknode
+          timeout: 1h
+          timeout.initialStartup: 1h
+          timeout.runtimeAssertion: 15m
         brooklyn.children:
-        - type: org.apache.brooklyn.test.framework.TestSensor
-          name: Check Riak Node is up
-          sensor: service.isUp
-          assert:
-          - equals: true
-        - type: org.apache.brooklyn.test.framework.TestHttpCall
-          name: Check Riak Console is accessible
-          url: $brooklyn:component("riaknode").attributeWhenReady("main.uri")
-          applyAssertionTo: status
-          assert:
-          - isEqualTo: 200
+        - type: assert-up-and-running-initial
+          name: "1. Riak Node up and running initial"
+        - type: assert-up-and-running
+          name: "2. Riak Node up and running"
+        - type: assert-restart-process
+          name: "3. Riak Node restart process"
+          brooklyn.config:
+            process.grep.name: "[r]iak console"
+        - type: assert-stop-and-restart-process
+          name: "4. Riak Node stop and restart process"
+          brooklyn.config:
+            process.grep.name: "[r]iak console"
+        - type: test-http-status-200
+          name: "5. Riak Node endpoint returns 200"
+          brooklyn.config:
+            url: $brooklyn:component("riaknode").attributeWhenReady("main.uri")
 
-      # Effector: restart Tests
-      - type: org.apache.brooklyn.test.framework.TestCase
-        name: "Effector: restart Tests"
-        brooklyn.children:
-        - type: org.apache.brooklyn.test.framework.TestEffector
-          name: Invoke restart Effector
-          effector: restart
-          params:
-            restartMachine: false
-        - type: org.apache.brooklyn.test.framework.TestSensor
-          name: Check Riak Node is up after restart
-          sensor: service.isUp
-          assert:
-          - equals: true
-        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
-          name: Check Riak process has restarted
-          command: ps -ef | grep '[r]iak console'
-          assertStatus:
-            equals: 0
-
-      # Effector: stop + restart Tests
-      - type: org.apache.brooklyn.test.framework.TestCase
-        name: "Effector: stop + restart Tests"
-        brooklyn.children:
-        - type: org.apache.brooklyn.test.framework.TestEffector
-          name: Invoke stop Effector
-          effector: stop
-          params:
-            stopMachineMode: NEVER
-        - type: org.apache.brooklyn.test.framework.TestSensor
-          name: Check Riak Node is not up after stop
-          sensor: service.isUp
-          assert:
-          - equals: false
-        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
-          name: Check Riak process has stopped
-          command: ps -ef | grep '[r]iak console'
-          assertStatus:
-            equals: 1
-        - type: org.apache.brooklyn.test.framework.TestEffector
-          name: Invoke restart Effector
-          effector: restart
-          params:
-            restartMachine: false
-        - type: org.apache.brooklyn.test.framework.TestSensor
-          name: Check Riak Node is up after restart
-          sensor: service.isUp
-          assert:
-          - equals: true
-        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
-          name: Check Riak process has restarted
-          command: ps -ef | grep '[r]iak console'
-          assertStatus:
-            equals: 0
