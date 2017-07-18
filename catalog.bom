@@ -31,3 +31,5 @@ brooklyn.catalog:
   item:
     services:
     - type: org.apache.brooklyn.entity.nosql.riak.RiakNode
+      brooklyn.config:
+        riak.networking.internal: false
